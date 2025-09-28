@@ -27,12 +27,25 @@ export const startSessionController = async (req, res) => {
 
 export const getSessionHistoryController = async (req, res) => {
   try {
-    const history = await getSessionHistory(req.params.historyId);
+    const { historyId } = req.params;
+    const userId = req.user._id.toString();
+
+    const history = await getSessionHistory(historyId);
     if (!history) {
       return res.status(404).json({ error: "History not found" });
     }
+
+    // Check if user has access to this history (optional security check)
+    if (
+      history.teacherId !== userId &&
+      !history.participants.some((p) => p.userId === userId)
+    ) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
     res.json(history);
   } catch (error) {
+    console.error("Error fetching history:", error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -9,12 +9,11 @@ import {
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticate);
+router.post("/start", authenticate, startSessionController);
+router.get("/user-history", authenticate, getUserHistoryController);
+router.get("/history/:historyId", authenticate, getSessionHistoryController);
 
-router.post("/start", startSessionController);
-router.get("/user-history", getUserHistoryController);
-router.get("/history/:historyId", getSessionHistoryController);
+// Export route - NO authentication required
 router.get("/export/:historyId", exportResultsController);
 
 export default router;

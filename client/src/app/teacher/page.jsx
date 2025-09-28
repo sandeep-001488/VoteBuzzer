@@ -253,7 +253,6 @@ function TeacherDashboardContent() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-             
               <Button
                 variant="outline"
                 onClick={() => router.push("/dashboard")}
@@ -393,14 +392,7 @@ function TeacherDashboardContent() {
                               End Current Question
                             </Button>
                           )}
-                          <Button
-                            onClick={viewSessionDetails}
-                            variant="outline"
-                            size="sm"
-                            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                          >
-                            View Details
-                          </Button>
+
                           {(sessionCompleted ||
                             askedQuestions.size ===
                               activePoll?.questions?.length) && (

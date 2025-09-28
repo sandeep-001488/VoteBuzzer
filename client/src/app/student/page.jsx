@@ -259,7 +259,7 @@ function StudentPageContent() {
             <p className="text-gray-600 mb-6">
               Thank you for participating! The teacher has ended the session.
             </p>
-            <div className="flex flex-row gap-3 items-center">
+            <div className="flex flex-col md:flex-row gap-3 items-center">
               <Button
                 onClick={resetSession}
                 className="bg-gradient-to-r mx-auto from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"

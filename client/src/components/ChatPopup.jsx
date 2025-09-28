@@ -78,8 +78,21 @@ export default function ChatPopup({ pollId, historyId, userName }) {
     }
   };
 
+  const getAvatarColor = (name) => {
+    const colors = [
+      "bg-gradient-to-r from-purple-500 to-pink-500",
+      "bg-gradient-to-r from-blue-500 to-indigo-500",
+      "bg-gradient-to-r from-green-500 to-teal-500",
+      "bg-gradient-to-r from-orange-500 to-red-500",
+      "bg-gradient-to-r from-yellow-500 to-orange-500",
+      "bg-gradient-to-r from-indigo-500 to-purple-500",
+    ];
+    const index = name?.length % colors.length || 0;
+    return colors[index];
+  };
+
   if (!pollId || !historyId) {
-    return null; // Don't render chat if not in a session
+    return null;
   }
 
   return (
@@ -87,75 +100,114 @@ export default function ChatPopup({ pollId, historyId, userName }) {
       {/* Chat Toggle Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg z-40"
+        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 shadow-2xl z-40 transition-all duration-300 hover:scale-110"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-7 h-7 text-white" />
         {unreadCount > 0 && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount}
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
+            {unreadCount > 9 ? "9+" : unreadCount}
           </div>
         )}
       </Button>
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 w-80 h-96 shadow-lg z-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm">Group Chat</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+        <Card className="fixed bottom-24 right-6 w-80 h-96 shadow-2xl z-50 border-0 bg-white/95 backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-t-lg">
+            <CardTitle className="text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Group Chat
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="hover:bg-red-50 hover:text-red-600 rounded-full"
+            >
               <X className="w-4 h-4" />
             </Button>
           </CardHeader>
-          <CardContent className="flex flex-col h-full pb-4">
+          <CardContent className="flex flex-col h-full pb-4 px-3">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+            <div className="flex-1 overflow-y-auto space-y-3 mb-3 py-2">
               {messages.length === 0 && (
-                <div className="text-center text-gray-500 text-sm py-4">
-                  No messages yet. Start the conversation!
-                </div>
-              )}
-              {messages.map((message, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <Avatar className="h-6 w-6 flex-shrink-0">
-                    <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs">
-                      {message.from?.charAt(0)?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium text-gray-700">
-                      {message.from}
-                    </div>
-                    <div className="text-sm text-gray-900 break-words">
-                      {message.text}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(
-                        message.timestamp || message.at
-                      ).toLocaleTimeString()}
-                    </div>
+                <div className="text-center text-gray-400 text-sm py-8">
+                  <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg p-4">
+                    <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p>No messages yet.</p>
+                    <p className="text-xs">Start the conversation!</p>
                   </div>
                 </div>
-              ))}
+              )}
+              {messages.map((message, index) => {
+                const isHost = message.from.includes("(Host)");
+                return (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 animate-in slide-in-from-bottom-2 duration-300"
+                  >
+                    <Avatar className="h-7 w-7 flex-shrink-0 border-2 border-white shadow-sm">
+                      <AvatarFallback
+                        className={`${getAvatarColor(
+                          message.from
+                        )} text-white text-xs font-semibold`}
+                      >
+                        {message.from?.charAt(0)?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-xs font-semibold text-gray-700 truncate">
+                          {message.from}
+                        </div>
+                        {isHost && (
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm">
+                            HOST
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg px-3 py-2 shadow-sm">
+                        <div className="text-sm text-gray-900 break-words whitespace-pre-wrap leading-relaxed">
+                          {message.text}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {new Date(
+                          message.timestamp || message.at
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 bg-gradient-to-r from-gray-50 to-indigo-50 p-2 rounded-lg">
               <Input
-                placeholder="Type a message..."
+                placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1"
+                className="flex-1 border-0 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 maxLength={500}
               />
               <Button
                 onClick={sendMessage}
                 disabled={!newMessage.trim()}
                 size="sm"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
               </Button>
+            </div>
+
+            {/* Message Counter */}
+            <div className="text-xs text-gray-400 text-center mt-1">
+              {newMessage.length}/500
             </div>
           </CardContent>
         </Card>

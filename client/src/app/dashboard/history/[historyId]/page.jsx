@@ -223,9 +223,7 @@ function HistoryDetailsContent() {
                           Your Answer: {question.userAnswer}
                         </div>
                         <div className="text-sm text-gray-600 flex items-center gap-4">
-                          <span>
-                            Total Responses: {question.totalResponses || 0}
-                          </span>
+                     
                           {question.endedAt && (
                             <span>
                               Completed: {formatTimestamp(question.endedAt)}
@@ -314,16 +312,7 @@ function HistoryDetailsContent() {
                 <Users className="w-4 h-4 mr-1" />
                 {history.participantCount || 0} participants
               </Badge>
-              {history.endedAt && (
-                <Button
-                  onClick={exportResults}
-                  variant="outline"
-                  className="bg-white hover:bg-gray-50"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export CSV
-                </Button>
-              )}
+         
             </div>
           </div>
         </div>

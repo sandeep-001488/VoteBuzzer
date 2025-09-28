@@ -7,7 +7,7 @@ import connectDB from "./config/db.js";
 import socketHandler from "./socket/index.js";
 
 // Import routes
-import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import pollRoutes from "./routes/pollRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 
@@ -40,7 +40,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/auth", authRoutes);
+
+app.use("/api", userRoutes);
 app.use("/api/polls", pollRoutes);
 app.use("/api/sessions", sessionRoutes);
 

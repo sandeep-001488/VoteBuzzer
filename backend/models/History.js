@@ -12,8 +12,16 @@ const finishedQuestionSchema = new mongoose.Schema({
   tallies: {
     type: Map,
     of: Number,
+    default: new Map(),
   },
-  totalVotes: Number,
+  totalVotes: {
+    type: Number,
+    default: 0,
+  },
+  startedAt: {
+    type: Date,
+    required: true,
+  },
   endedAt: {
     type: Date,
     default: Date.now,
@@ -27,11 +35,13 @@ const historySchema = new mongoose.Schema({
     unique: true,
   },
   pollId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Poll",
     required: true,
   },
   teacherId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
   title: String,
@@ -40,7 +50,11 @@ const historySchema = new mongoose.Schema({
     {
       sessionId: String,
       name: String,
-      userId: String,
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
       joinedAt: {
         type: Date,
         default: Date.now,
@@ -51,11 +65,18 @@ const historySchema = new mongoose.Schema({
     {
       sessionId: String,
       name: String,
-      userId: String, // Add this field
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
       events: [
         {
           event: String,
-          timestamp: Date,
+          timestamp: {
+            type: Date,
+            default: Date.now,
+          },
           details: String,
         },
       ],

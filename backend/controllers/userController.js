@@ -76,7 +76,6 @@ export const getMe = async (req, res) => {
   }
 };
 
-// New controller for profile by ID
 export const getProfileByIdController = async (req, res) => {
   try {
     const user = await userService.getProfileById(req.params.id);

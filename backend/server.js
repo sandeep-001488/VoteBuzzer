@@ -6,21 +6,17 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import socketHandler from "./socket/index.js";
 
-// Import routes
 import userRoutes from "./routes/userRoutes.js";
 import pollRoutes from "./routes/pollRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 
-// Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
 connectDB();
 
 const app = express();
 const server = http.createServer(app);
 
-// Configure CORS for Socket.IO
 const io = new SocketIO(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -29,7 +25,6 @@ const io = new SocketIO(server, {
   },
 });
 
-// Middleware
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -39,18 +34,15 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
 
 app.use("/api", userRoutes);
 app.use("/api/polls", pollRoutes);
 app.use("/api/sessions", sessionRoutes);
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "Server is running" });
 });
 
-// Socket.io handling
 socketHandler(io);
 
 const PORT = process.env.PORT || 5000;

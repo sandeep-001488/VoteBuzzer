@@ -13,7 +13,6 @@ router.post("/start", authenticate, startSessionController);
 router.get("/user-history", authenticate, getUserHistoryController);
 router.get("/history/:historyId", authenticate, getSessionHistoryController);
 
-// Export route - NO authentication required
 router.get("/export/:historyId", exportResultsController);
 
 export default router;

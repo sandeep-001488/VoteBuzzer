@@ -11,7 +11,7 @@ export const createPollController = async (req, res) => {
   try {
     const pollData = {
       ...req.body,
-      teacherId: req.user._id.toString(), // Convert to string
+      teacherId: req.user._id.toString(), 
     };
     const poll = await createPoll(pollData);
     res.status(201).json(poll);

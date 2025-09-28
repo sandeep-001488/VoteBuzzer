@@ -6,13 +6,10 @@ import Poll from "../models/Poll.js";
 import User from "../models/User.js";
 import * as sessionService from "../services/sessionService.js";
 import * as chatService from "../services/chatService.js";
-import * as pollService from "../services/pollService.js";
 
-// Store active polls and timers
 const activePolls = new Map();
 const questionTimers = new Map();
 
-// Socket authentication middleware
 const socketAuth = async (socket, next) => {
   try {
     const token = socket.handshake.auth.token;
@@ -44,7 +41,6 @@ export default (io) => {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.user.name}`);
 
-    // Teacher starts session
     socket.on("teacher:startSession", async (data, callback) => {
       try {
         const result = await sessionService.startSession({
@@ -70,7 +66,6 @@ export default (io) => {
       }
     });
 
-    // Teacher asks question
     socket.on("teacher:askQuestion", async (data) => {
       const { pollId, historyId, questionId, timeLimitSec = 60 } = data;
       const roomName = `poll-${pollId}-${historyId}`;
@@ -104,11 +99,9 @@ export default (io) => {
         activePoll.currentQuestion = questionId;
         activePoll.askedQuestions.add(questionId);
 
-        // Reset all students' answered status for new question
         for (const student of activePoll.students.values()) {
           student.answered = false;
         }
-        // *** ADD THIS CRITICAL SECTION ***
         const history = await History.findOne({ historyId });
         if (history) {
           const existingQuestionIndex = history.finishedQuestions.findIndex(
@@ -116,14 +109,13 @@ export default (io) => {
           );
 
           if (existingQuestionIndex === -1) {
-            // Add new question with startedAt timestamp
             history.finishedQuestions.push({
               questionId,
               questionText: question.text,
               options: question.options,
               tallies: new Map(),
               totalVotes: 0,
-              startedAt: new Date(), // CRITICAL for response time calculation
+              startedAt: new Date(), 
               endedAt: null,
             });
           } else {
@@ -134,7 +126,6 @@ export default (io) => {
           }
           await history.save();
         }
-        // *** END OF ADDITION ***
 
         const timerKey = `${historyId}-${questionId}`;
         if (questionTimers.has(timerKey)) {
@@ -281,6 +272,7 @@ export default (io) => {
     });
 
     // Student submits answer
+   
     socket.on("student:submitAnswer", async (data) => {
       const { pollId, historyId, questionId, optionId, sessionId } = data;
 
@@ -293,13 +285,23 @@ export default (io) => {
           sessionId,
         });
 
+        // Update the active poll student status immediately
         const activePoll = activePolls.get(historyId);
         if (activePoll && activePoll.students.has(sessionId)) {
           activePoll.students.get(sessionId).answered = true;
         }
 
+        // Send immediate update to show student has answered
         await updateParticipantsList(pollId, historyId);
+
+        // Send results update
         await sendResultsUpdate(pollId, historyId, questionId);
+
+        // Emit immediate confirmation to the student who answered
+        socket.emit("server:answerConfirmed", {
+          questionId,
+          message: "Your answer has been recorded!",
+        });
       } catch (error) {
         socket.emit("error", { message: error.message });
       }
@@ -486,6 +488,7 @@ export default (io) => {
     }
   }
 
+
   async function updateParticipantsList(pollId, historyId) {
     const roomName = `poll-${pollId}-${historyId}`;
 
@@ -499,16 +502,37 @@ export default (io) => {
       const activePoll = activePolls.get(historyId);
       const currentQuestionId = activePoll ? activePoll.currentQuestion : null;
 
-      const students = sessions.map((session) => ({
-        sessionId: session.sessionId,
-        name: session.name,
-        connected: session.connected,
-        kicked: session.kicked,
-        answered:
-          currentQuestionId && session.answeredFor
-            ? session.answeredFor[currentQuestionId] !== undefined
-            : false,
-      }));
+      // Get votes for current question to check who has answered
+      const votes = currentQuestionId
+        ? await Vote.find({ historyId, questionId: currentQuestionId })
+        : [];
+
+      const answeredSessionIds = new Set(votes.map((vote) => vote.sessionId));
+
+      const students = sessions.map((session) => {
+        const hasAnswered = currentQuestionId
+          ? answeredSessionIds.has(session.sessionId)
+          : false;
+
+        return {
+          sessionId: session.sessionId,
+          name: session.name,
+          connected: session.connected,
+          kicked: session.kicked,
+          answered: hasAnswered,
+          answeredAt: hasAnswered ? new Date() : null, // For sorting
+        };
+      });
+
+      // Sort students: answered first (most recent first), then unanswered
+      students.sort((a, b) => {
+        if (a.answered && !b.answered) return -1;
+        if (!a.answered && b.answered) return 1;
+        if (a.answered && b.answered) {
+          return new Date(b.answeredAt) - new Date(a.answeredAt);
+        }
+        return a.name.localeCompare(b.name);
+      });
 
       io.to(roomName).emit("server:studentListUpdate", { students });
     } catch (error) {

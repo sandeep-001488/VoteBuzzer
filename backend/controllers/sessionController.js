@@ -49,7 +49,6 @@ export const getSessionHistoryController = async (req, res) => {
       return res.status(404).json({ error: "History not found" });
     }
 
-    // Check if user has access to this history
     const isTeacher = history.teacherId._id.toString() === userId;
     const isParticipant = history.participants.some(
       (p) => p.userId.toString() === userId
@@ -59,7 +58,6 @@ export const getSessionHistoryController = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Get poll details for question mapping
     const poll = await Poll.findById(history.pollId);
     const questionMap = {};
     if (poll) {
@@ -257,11 +255,9 @@ export const getSessionHistoryController = async (req, res) => {
   }
 };
 
-// Helper function to format activity details
 const formatActivityDetails = (details, questionMap) => {
   if (!details) return details;
 
-  // Look for question IDs in the format: "Answered: questionId" or similar
   const questionIdMatch = details.match(
     /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/
   );

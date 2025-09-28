@@ -10,7 +10,6 @@ export const startSession = async ({ pollId, teacherId }) => {
   const poll = await Poll.findById(pollId);
   if (!poll) throw new Error("Poll not found");
 
-  // Check if teacher already has an active session
   const activeSession = await History.findOne({
     teacherId,
     endedAt: { $exists: false },
@@ -44,7 +43,6 @@ export const joinSession = async ({
   sessionId,
   userId,
 }) => {
-  // Check if user has an active session as teacher
   const activeTeacherSession = await History.findOne({
     teacherId: userId,
     endedAt: { $exists: false },
@@ -91,7 +89,6 @@ export const joinSession = async ({
       ],
     });
 
-    // Add to history participants
     const history = await History.findOne({ historyId });
     if (history) {
       if (!history.participants) {
@@ -134,7 +131,6 @@ export const submitVote = async ({
       session.logs = [];
     }
 
-    // Get question text for better logging
     const poll = await Poll.findById(pollId);
     const question = poll.questions.find((q) => q.id === questionId);
     const questionText = question ? question.text : questionId;
@@ -158,7 +154,6 @@ export const getSessionHistory = async (historyId) => {
 
     if (!history) return null;
 
-    // Get all sessions for this history
     const sessions = await Session.find({ historyId }).populate(
       "userId",
       "name email"
@@ -365,31 +360,85 @@ export const getUserHistory = async (userId) => {
 };
 
 export const exportResultsToCSV = async (historyId) => {
-  const history = await History.findOne({ historyId }).populate(
-    "pollId",
-    "title questions"
-  );
+  try {
+    const history = await History.findOne({ historyId }).populate(
+      "pollId",
+      "title questions"
+    );
 
-  if (!history) throw new Error("History not found");
+    if (!history) throw new Error("History not found");
 
-  let csvContent = "Question,Option,Votes,Percentage\n";
+    // Get all votes for this history to calculate actual tallies
+    const votes = await Vote.find({ historyId });
 
-  history.finishedQuestions.forEach((question, qIndex) => {
-    const questionText = question.questionText || `Question ${qIndex + 1}`;
-    const tallies =
-      question.tallies instanceof Map
-        ? Object.fromEntries(question.tallies)
-        : question.tallies || {};
+    let csvContent = "Question,Option,Votes,Percentage\n";
 
-    question.options.forEach((option) => {
-      const votes = tallies[option.id] || 0;
-      const percentage =
-        question.totalVotes > 0
-          ? ((votes / question.totalVotes) * 100).toFixed(1)
-          : "0.0";
-      csvContent += `"${questionText}","${option.text}",${votes},${percentage}%\n`;
+    // Process each finished question
+    history.finishedQuestions.forEach((finishedQuestion, qIndex) => {
+      const questionText =
+        finishedQuestion.questionText || `Question ${qIndex + 1}`;
+
+      // Calculate actual vote tallies from the votes collection
+      const questionVotes = votes.filter(
+        (v) => v.questionId === finishedQuestion.questionId
+      );
+      const actualTallies = {};
+      let totalVotes = 0;
+
+      // Count votes for each option
+      questionVotes.forEach((vote) => {
+        actualTallies[vote.optionId] = (actualTallies[vote.optionId] || 0) + 1;
+        totalVotes++;
+      });
+
+      // Get the options from the finished question or poll
+      let options = finishedQuestion.options || [];
+
+      // If no options in finished question, try to get from poll
+      if (options.length === 0 && history.pollId && history.pollId.questions) {
+        const pollQuestion = history.pollId.questions.find(
+          (q) => q.id === finishedQuestion.questionId
+        );
+        if (pollQuestion) {
+          options = pollQuestion.options;
+        }
+      }
+
+      // Export each option with its vote count
+      if (options.length > 0) {
+        options.forEach((option) => {
+          const votes = actualTallies[option.id] || 0;
+          const percentage =
+            totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(1) : "0.0";
+
+          // Escape quotes in text for CSV
+          const cleanQuestionText = questionText.replace(/"/g, '""');
+          const cleanOptionText = option.text.replace(/"/g, '""');
+
+          csvContent += `"${cleanQuestionText}","${cleanOptionText}",${votes},${percentage}%\n`;
+        });
+      } else {
+        // Fallback if no options found - show from stored tallies
+        const storedTallies =
+          finishedQuestion.tallies instanceof Map
+            ? Object.fromEntries(finishedQuestion.tallies)
+            : finishedQuestion.tallies || {};
+
+        Object.entries(storedTallies).forEach(([optionId, votes]) => {
+          const percentage =
+            finishedQuestion.totalVotes > 0
+              ? ((votes / finishedQuestion.totalVotes) * 100).toFixed(1)
+              : "0.0";
+
+          const cleanQuestionText = questionText.replace(/"/g, '""');
+          csvContent += `"${cleanQuestionText}","Option ${optionId}",${votes},${percentage}%\n`;
+        });
+      }
     });
-  });
 
-  return csvContent;
+    return csvContent;
+  } catch (error) {
+    console.error("Error in exportResultsToCSV:", error);
+    throw new Error(`Failed to export results: ${error.message}`);
+  }
 };

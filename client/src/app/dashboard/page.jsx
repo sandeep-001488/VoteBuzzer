@@ -1,88 +1,3 @@
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Card,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card";
-// import { useAuth } from "@/contexts/AuthContext";
-// import AuthGuard from "@/components/AuthGuard";
-
-// function DashboardContent() {
-//   const { user, logout } = useAuth();
-//   const router = useRouter();
-//   console.log(user);
-
-//   const handleRoleSelection = (role) => {
-//     if (role === "teacher") {
-//       router.push("/teacher");
-//     } else {
-//       router.push("/student");
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center p-4">
-//       <div className="w-full max-w-md">
-//         <div className="text-center mb-8">
-//           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
-//             <span className="w-2 h-2 bg-white rounded-full"></span>
-//             Interactive Poll
-//           </div>
-//           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-//             Welcome, {user?.name}!
-//           </h1>
-//           <p className="text-gray-600">
-//             Choose how you'd like to use the polling system
-//           </p>
-//         </div>
-
-//         <div className="space-y-4 mb-8">
-//           <Card
-//             className="cursor-pointer transition-all duration-200 hover:shadow-lg border-gray-200"
-//             onClick={() => handleRoleSelection("student")}
-//           >
-//             <CardHeader className="pb-3">
-//               <CardTitle className="text-lg">Join as Student</CardTitle>
-//               <CardDescription>
-//                 Enter session details to participate in live polls and answer
-//                 questions
-//               </CardDescription>
-//             </CardHeader>
-//           </Card>
-
-//           <Card
-//             className="cursor-pointer transition-all duration-200 hover:shadow-lg border-gray-200"
-//             onClick={() => handleRoleSelection("teacher")}
-//           >
-//             <CardHeader className="pb-3">
-//               <CardTitle className="text-lg">Create as Teacher</CardTitle>
-//               <CardDescription>
-//                 Create polls, manage sessions, and view live results from
-//                 students
-//               </CardDescription>
-//             </CardHeader>
-//           </Card>
-//         </div>
-
-//         <Button onClick={logout} variant="outline" className="w-full">
-//           Logout
-//         </Button>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default function Dashboard() {
-//   return (
-//     <AuthGuard>
-//       <DashboardContent />
-//     </AuthGuard>
-//   );
-// }
 "use client";
 
 import { useState, useEffect } from "react";
@@ -90,7 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Download, Users, Calendar, BookOpen } from "lucide-react";
+import {
+  Eye,
+  Download,
+  Users,
+  Calendar,
+  BookOpen,
+  GraduationCap,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
 import AuthGuard from "@/components/AuthGuard";
@@ -115,6 +37,7 @@ function DashboardContent() {
 
       const data = await apiClient.get("/sessions/user-history");
       setHistory(data);
+      console.log(data);
     } catch (error) {
       console.error("Error loading history:", error);
     } finally {
@@ -147,31 +70,46 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome back, {user?.name}</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-gray-700 mt-1 font-medium">
+                Welcome back, {user?.name}
+              </p>
             </div>
             <div className="flex items-center gap-4">
-              <Button onClick={goToTeacherDashboard}>
+              <Button
+                onClick={goToTeacherDashboard}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Create Poll
               </Button>
-              <Button onClick={goToStudentPage} variant="outline">
+              <Button
+                onClick={goToStudentPage}
+                variant="outline"
+                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Join Poll
               </Button>
-              <Button variant="outline" onClick={handleLogout}>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+              >
                 Logout
               </Button>
             </div>
@@ -179,13 +117,13 @@ function DashboardContent() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card className="border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <BookOpen className="h-8 w-8 text-purple-600" />
+                <GraduationCap className="h-8 w-8 text-indigo-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">
-                    Sessions Taught
+                    Sessions Conducted
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {history.asTeacher.length}
@@ -195,7 +133,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-blue-600" />
@@ -211,7 +149,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-green-600" />
@@ -229,70 +167,87 @@ function DashboardContent() {
         </div>
 
         <Tabs defaultValue="teacher" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="teacher">
-              Sessions I've Taught ({history.asTeacher.length})
+          <TabsList className="grid w-full grid-cols-2 bg-white shadow-sm">
+            <TabsTrigger
+              value="teacher"
+              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+            >
+              Sessions I've Conducted ({history.asTeacher.length})
             </TabsTrigger>
-            <TabsTrigger value="student">
+            <TabsTrigger
+              value="student"
+              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+            >
               Sessions I've Joined ({history.asStudent.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="teacher" className="space-y-4">
             {history.asTeacher.length === 0 ? (
-              <Card>
+              <Card className="shadow-sm">
                 <CardContent className="text-center py-12">
-                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No Sessions Taught Yet
+                    No Sessions Conducted Yet
                   </h3>
                   <p className="text-gray-600 mb-6">
                     Start creating polls and conducting sessions to see your
                     teaching history here.
                   </p>
-                  {user?.role === "teacher" && (
-                    <Button onClick={goToTeacherDashboard}>
-                      Create Your First Poll
-                    </Button>
-                  )}
+                  <Button
+                    onClick={goToTeacherDashboard}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  >
+                    Create Your First Poll
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
               history.asTeacher.map((session) => (
-                <Card key={session.historyId}>
+                <Card
+                  key={session.historyId}
+                  className="shadow-sm hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
                           <h3 className="text-lg font-semibold text-gray-900">
-                            {session.pollId?.title || "Untitled Poll"}
+                            {session.pollId?.title ||
+                              session.title ||
+                              "Untitled Poll"}
                           </h3>
                           <Badge
                             variant={session.endedAt ? "secondary" : "default"}
+                            className={
+                              session.endedAt
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-green-100 text-green-800"
+                            }
                           >
                             {session.endedAt ? "Completed" : "In Progress"}
                           </Badge>
                         </div>
 
                         <div className="text-sm text-gray-600 space-y-1">
-                          <p>
-                            <Calendar className="w-4 h-4 inline mr-2" />
+                          <p className="flex items-center">
+                            <Calendar className="w-4 h-4 inline mr-2 text-indigo-600" />
                             Created:{" "}
                             {new Date(session.createdAt).toLocaleString()}
                           </p>
                           {session.endedAt && (
-                            <p>
-                              <Calendar className="w-4 h-4 inline mr-2" />
+                            <p className="flex items-center">
+                              <Calendar className="w-4 h-4 inline mr-2 text-green-600" />
                               Ended:{" "}
                               {new Date(session.endedAt).toLocaleString()}
                             </p>
                           )}
                           <div className="flex items-center gap-4 mt-2">
-                            <span className="flex items-center">
+                            <span className="flex items-center text-blue-600">
                               <Users className="w-4 h-4 mr-1" />
                               {session.participantCount || 0} participants
                             </span>
-                            <span className="flex items-center">
+                            <span className="flex items-center text-purple-600">
                               <BookOpen className="w-4 h-4 mr-1" />
                               {session.questionsCompleted || 0} questions
                               completed
@@ -306,6 +261,7 @@ function DashboardContent() {
                           variant="outline"
                           size="sm"
                           onClick={() => viewDetails(session.historyId)}
+                          className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View Details
@@ -315,6 +271,7 @@ function DashboardContent() {
                             variant="outline"
                             size="sm"
                             onClick={() => exportResults(session.historyId)}
+                            className="border-green-200 text-green-700 hover:bg-green-50"
                           >
                             <Download className="w-4 h-4 mr-1" />
                             Export
@@ -330,7 +287,7 @@ function DashboardContent() {
 
           <TabsContent value="student" className="space-y-4">
             {history.asStudent.length === 0 ? (
-              <Card>
+              <Card className="shadow-sm">
                 <CardContent className="text-center py-12">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -340,35 +297,49 @@ function DashboardContent() {
                     Join polling sessions to participate and see your
                     participation history here.
                   </p>
-                  <Button onClick={goToStudentPage} variant="outline">
+                  <Button
+                    onClick={goToStudentPage}
+                    variant="outline"
+                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
                     Join Your First Session
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               history.asStudent.map((session) => (
-                <Card key={session.historyId}>
+                <Card
+                  key={session.historyId}
+                  className="shadow-sm hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
                           <h3 className="text-lg font-semibold text-gray-900">
-                            {session.pollId?.title || "Untitled Poll"}
+                            {session.pollId?.title ||
+                              session.title ||
+                              "Untitled Poll"}
                           </h3>
                           <Badge
                             variant={session.endedAt ? "secondary" : "default"}
+                            className={
+                              session.endedAt
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-green-100 text-green-800"
+                            }
                           >
                             {session.endedAt ? "Completed" : "In Progress"}
                           </Badge>
                         </div>
 
                         <div className="text-sm text-gray-600 space-y-1">
-                          <p>
-                            <Users className="w-4 h-4 inline mr-2" />
-                            Taught by: {session.teacherId?.name || "Unknown"}
+                          <p className="flex items-center">
+                            <Users className="w-4 h-4 inline mr-2 text-purple-600" />
+                            Conducted by: {session.teacherId?.name || "Unknown"}
                           </p>
-                          <p>
-                            <Calendar className="w-4 h-4 inline mr-2" />
+                          <p className="flex items-center">
+                            <Calendar className="w-4 h-4 inline mr-2 text-indigo-600" />
                             Joined:{" "}
                             {new Date(
                               session.participationDetails?.joinedAt ||
@@ -376,13 +347,13 @@ function DashboardContent() {
                             ).toLocaleString()}
                           </p>
                           {session.endedAt && (
-                            <p>
-                              <Calendar className="w-4 h-4 inline mr-2" />
+                            <p className="flex items-center">
+                              <Calendar className="w-4 h-4 inline mr-2 text-green-600" />
                               Ended:{" "}
                               {new Date(session.endedAt).toLocaleString()}
                             </p>
                           )}
-                          <p className="flex items-center">
+                          <p className="flex items-center text-blue-600">
                             <BookOpen className="w-4 h-4 mr-1" />
                             {session.questionsCompleted || 0} questions
                             completed
@@ -395,6 +366,7 @@ function DashboardContent() {
                           variant="outline"
                           size="sm"
                           onClick={() => viewDetails(session.historyId)}
+                          className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View Details

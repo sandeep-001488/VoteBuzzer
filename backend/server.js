@@ -20,7 +20,7 @@ const server = http.createServer(app);
 const io = new SocketIO(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
 });
@@ -33,7 +33,6 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 app.use("/api", userRoutes);
 app.use("/api/polls", pollRoutes);

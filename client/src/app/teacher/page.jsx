@@ -49,6 +49,21 @@ function TeacherDashboardContent() {
         setTimeLeft(data.timeLeftSec);
       });
 
+      socket.on("server:sessionRestore", (data) => {
+        setCurrentSession({ historyId: data.historyId, pollId: data.pollId });
+        setActivePoll(data.poll);
+        setAskedQuestions(new Set(data.askedQuestions));
+        if (data.currentQuestion) {
+          setCurrentQuestion(
+            data.poll.questions.find((q) => q.id === data.currentQuestion)
+          );
+          // timeLeft will come from questionStarted if active
+        } else {
+          setCurrentQuestion(null);
+        }
+        setActiveTab("manage");
+      });
+
       socket.on("server:sessionCompleted", (data) => {
         setSessionCompleted(true);
         setCurrentQuestion(null);
@@ -93,6 +108,7 @@ function TeacherDashboardContent() {
 
       return () => {
         socket.off("server:questionStarted");
+        socket.off("server:sessionRestore");
         socket.off("server:sessionCompleted");
         socket.off("server:sessionEnded");
         socket.off("server:studentListUpdate");
@@ -102,6 +118,23 @@ function TeacherDashboardContent() {
       };
     }
   }, [token]);
+
+  useEffect(() => {
+    async function checkActiveSession() {
+      try {
+        const active = await apiClient.get("/sessions/active");
+        if (active) {
+          setCurrentSession({
+            historyId: active.historyId,
+            pollId: active.pollId,
+          });
+        }
+      } catch (error) {
+        console.error("Error checking active session:", error);
+      }
+    }
+    checkActiveSession();
+  }, []);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -253,7 +286,6 @@ function TeacherDashboardContent() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-             
               <Button
                 variant="outline"
                 onClick={() => router.push("/dashboard")}
@@ -382,7 +414,7 @@ function TeacherDashboardContent() {
                     </CardHeader>
                     <CardContent className="p-6">
                       <div className="space-y-4">
-                        <div className="flex gap-2 mb-4">
+                        {/* <div className="flex gap-2 mb-4">
                           {currentQuestion && (
                             <Button
                               onClick={endCurrentQuestion}
@@ -393,7 +425,7 @@ function TeacherDashboardContent() {
                               End Current Question
                             </Button>
                           )}
-                        
+
                           {(sessionCompleted ||
                             askedQuestions.size ===
                               activePoll?.questions?.length) && (
@@ -406,6 +438,26 @@ function TeacherDashboardContent() {
                               End Session
                             </Button>
                           )}
+                        </div> */}
+                        <div className="flex gap-2 mb-4">
+                          {currentQuestion && (
+                            <Button
+                              onClick={endCurrentQuestion}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              End Current Question
+                            </Button>
+                          )}
+                          <Button
+                            onClick={endSession}
+                            variant="destructive"
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            End Session
+                          </Button>
                         </div>
 
                         {activePoll?.questions?.map((question) => {

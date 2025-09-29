@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import socketManager from "@/lib/socket";
+import { Textarea } from "./ui/textarea";
 
 export default function ChatPopup({ pollId, historyId, userName }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -111,7 +112,7 @@ export default function ChatPopup({ pollId, historyId, userName }) {
 
       {/* Chat Window - Mobile Optimized */}
       {isOpen && (
-        <div className="fixed inset-0 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-80 lg:h-96 z-50 bg-black bg-opacity-50 lg:bg-transparent">
+        <div className="fixed inset-0 lg:inset-auto lg:bottom-20 lg:right-4 lg:w-80 lg:h-96 z-50 bg-black bg-opacity-50 lg:bg-transparent overflow-y-auto">
           <div className="h-full lg:h-auto bg-white lg:rounded-lg lg:shadow-2xl lg:border-0 lg:bg-white/95 lg:backdrop-blur-md flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 lg:p-3 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 lg:rounded-t-lg border-b lg:border-b-0">
@@ -158,19 +159,19 @@ export default function ChatPopup({ pollId, historyId, userName }) {
                         {message.from?.charAt(0)?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 overflow-hidden">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="text-sm lg:text-xs font-semibold text-gray-700 truncate">
                           {message.from}
                         </div>
                         {isHost && (
-                          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm">
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-sm flex-shrink-0">
                             HOST
                           </div>
                         )}
                       </div>
-                      <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg px-3 py-2 shadow-sm">
-                        <div className="text-sm lg:text-xs text-gray-900 break-words whitespace-pre-wrap leading-relaxed">
+                      <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg px-3 py-2 shadow-sm inline-block max-w-full">
+                        <div className="text-sm lg:text-xs text-gray-900 break-all overflow-wrap-break-word hyphens-auto leading-relaxed">
                           {message.text}
                         </div>
                       </div>
@@ -186,18 +187,24 @@ export default function ChatPopup({ pollId, historyId, userName }) {
                   </div>
                 );
               })}
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
             <div className="p-3 lg:p-3 border-t lg:border-t-0 bg-gradient-to-r from-gray-50 to-indigo-50 lg:rounded-b-lg">
               <div className="flex gap-2">
-                <Input
+                <Textarea
                   placeholder="Type your message..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="flex-1 border-0 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm lg:text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  className="flex-1 min-h-[40px] resize-none border-0 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm lg:text-xs"
                   maxLength={500}
                 />
                 <Button

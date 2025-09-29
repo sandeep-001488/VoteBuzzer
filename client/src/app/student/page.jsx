@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import socketManager from "@/lib/socket";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Menu, X } from "lucide-react";
 
 function StudentPageContent() {
   const [step, setStep] = useState("join");
@@ -26,6 +27,7 @@ function StudentPageContent() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [joinError, setJoinError] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   const { user, token, logout } = useAuth();
@@ -186,104 +188,199 @@ function StudentPageContent() {
     logout();
   };
 
+  // Mobile Header Component
+  const MobileHeader = ({
+    title,
+    subtitle,
+    showMenu = false,
+    onBack = null,
+  }) => (
+    <div className="lg:hidden bg-white/90 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-40">
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="p-2 flex-shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-bold text-gray-900 truncate">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-xs text-gray-600 truncate">{subtitle}</p>
+            )}
+          </div>
+        </div>
+        {showMenu && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex-shrink-0"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </Button>
+        )}
+      </div>
+      {showMenu && mobileMenuOpen && (
+        <div className="border-t border-indigo-100 bg-white p-4 space-y-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              router.back();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full hover:bg-blue-50 hover:text-blue-700 hover:border-blue-700 border-blue-200 text-sm"
+            size="sm"
+          >
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              handleLogout();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full hover:bg-red-50 hover:text-red-700 hover:border-red-200 text-sm"
+            size="sm"
+          >
+            Logout
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
   if (step === "kicked") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardContent className="text-center py-12">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-600 font-bold text-2xl">!</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              You've been removed!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              The teacher has removed you from the poll system.
-            </p>
-            <Button
-              onClick={resetSession}
-              className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
-            >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50">
+        <MobileHeader title="Removed from Session" />
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-md shadow-lg">
+            <CardContent className="text-center py-8 lg:py-12 px-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-red-600 font-bold text-xl lg:text-2xl">
+                  !
+                </span>
+              </div>
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+                You've been removed!
+              </h2>
+              <p className="text-gray-600 mb-4 lg:mb-6 text-sm lg:text-base">
+                The teacher has removed you from the poll system.
+              </p>
+              <Button
+                onClick={resetSession}
+                className="w-full lg:w-auto bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (step === "sessionCompleted") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardContent className="text-center py-12">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-green-600 font-bold text-2xl">✓</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              All Questions Completed!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              All questions have been asked. Please wait for the teacher to end
-              the session.
-            </p>
-            <Button
-              onClick={resetSession}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-            >
-              Join New Session
-            </Button>
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-            >
-              Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+        <MobileHeader title="Session Completed" />
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-md shadow-lg">
+            <CardContent className="text-center py-8 lg:py-12 px-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-green-600 font-bold text-xl lg:text-2xl">
+                  ✓
+                </span>
+              </div>
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+                All Questions Completed!
+              </h2>
+              <p className="text-gray-600 mb-4 lg:mb-6 text-sm lg:text-base">
+                All questions have been asked. Please wait for the teacher to
+                end the session.
+              </p>
+              <div className="space-y-2 lg:space-y-0 lg:space-x-2 lg:flex lg:justify-center">
+                <Button
+                  onClick={resetSession}
+                  className="w-full lg:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  Join New Session
+                </Button>
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="outline"
+                  className="w-full lg:w-auto border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (step === "sessionEnded") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardContent className="text-center py-12">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-blue-600 font-bold text-2xl">🎉</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Session Ended!
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Thank you for participating! The teacher has ended the session.
-            </p>
-            <div className="flex flex-col md:flex-row gap-3 items-center">
-              <Button
-                onClick={resetSession}
-                className="bg-gradient-to-r mx-auto from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              >
-                Join New Session
-              </Button>
-              <Button
-                onClick={() => router.push("/dashboard")}
-                className="bg-gradient-to-r mr-8 from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              >
-                Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <MobileHeader title="Session Ended" />
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-md shadow-lg">
+            <CardContent className="text-center py-8 lg:py-12 px-4">
+              <div className="w-12 h-12 lg:w-16 lg:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-blue-600 font-bold text-xl lg:text-2xl">
+                  🎉
+                </span>
+              </div>
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+                Session Ended!
+              </h2>
+              <p className="text-gray-600 mb-4 lg:mb-6 text-sm lg:text-base">
+                Thank you for participating! The teacher has ended the session.
+              </p>
+              <div className="space-y-2 lg:space-y-0 lg:space-x-2 lg:flex lg:justify-center">
+                <Button
+                  onClick={resetSession}
+                  className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                >
+                  Join New Session
+                </Button>
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="outline"
+                  className="w-full lg:w-auto border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (step === "join") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
-        <div className="max-w-md mx-auto">
-          <div className="flex justify-between items-center mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <MobileHeader title="Join a Poll Session" showMenu={true} />
+
+        <div className="max-w-md mx-auto p-4 lg:pt-8">
+          {/* Desktop Header */}
+          <div className="hidden lg:flex justify-between items-center mb-8">
             <div className="text-center flex-1">
               <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
                 <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
@@ -296,11 +393,11 @@ function StudentPageContent() {
                 Enter the session details to participate in live polling
               </p>
             </div>
-            <div className="flex flex-col gap-2 ">
+            <div className="flex flex-col gap-2">
               <Button
                 variant="outline"
                 onClick={() => router.back()}
-                className="ml-4 hover:bg-blue-50 hover:text-red-700 hover:border-blue-700 border border-blue-700  "
+                className="ml-4 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-700 border-blue-200"
               >
                 Back
               </Button>
@@ -314,13 +411,13 @@ function StudentPageContent() {
             </div>
           </div>
 
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-              <CardTitle className="text-indigo-900">
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur mt-4 lg:mt-0">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 lg:p-6">
+              <CardTitle className="text-indigo-900 text-base lg:text-lg">
                 Welcome, {user?.name}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 p-6">
+            <CardContent className="space-y-4 p-4 lg:p-6">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">
                   Poll ID
@@ -364,56 +461,92 @@ function StudentPageContent() {
 
   if (step === "waiting") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg border-0 bg-white/80 backdrop-blur">
-          <CardContent className="text-center py-12">
-            <div className="flex items-center justify-center mb-6">
-              <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
-                <AvatarFallback className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xl">
-                  {user?.name?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {user?.name}
-            </h2>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 mb-6">
-              Wait for the teacher to ask questions...
-            </p>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                onClick={leaveSession}
-                className="hover:bg-red-50 hover:text-red-700 hover:border-red-200"
-              >
-                Leave Session
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="text-sm hover:bg-gray-50"
-              >
-                Logout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <ChatPopup
-          pollId={pollId}
-          historyId={historyId}
-          userName={user?.name}
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <MobileHeader
+          title={`Waiting - ${user?.name}`}
+          subtitle="Wait for questions..."
         />
+
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <Card className="w-full max-w-md shadow-lg border-0 bg-white/80 backdrop-blur">
+            <CardContent className="text-center py-8 lg:py-12 px-4">
+              <div className="flex items-center justify-center mb-4 lg:mb-6">
+                <Avatar className="h-12 w-12 lg:h-16 lg:w-16 border-4 border-white shadow-lg">
+                  <AvatarFallback className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-lg lg:text-xl">
+                    {user?.name?.charAt(0)?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+                {user?.name}
+              </h2>
+              <div className="animate-spin rounded-full h-6 w-6 lg:h-8 lg:w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 mb-4 lg:mb-6 text-sm lg:text-base">
+                Wait for the teacher to ask questions...
+              </p>
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  onClick={leaveSession}
+                  className="w-full lg:w-auto hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                >
+                  Leave Session
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full lg:w-auto text-sm hover:bg-gray-50"
+                >
+                  Logout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <ChatPopup
+            pollId={pollId}
+            historyId={historyId}
+            userName={user?.name}
+          />
+        </div>
       </div>
     );
   }
 
   if (step === "question" && currentQuestion) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        {/* Mobile Header with Timer */}
+        <div className="lg:hidden bg-white/90 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-40">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800 px-2 py-1 text-xs"
+              >
+                {user?.name}
+              </Badge>
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                size="sm"
+                className="hover:bg-red-50 hover:text-red-700 text-xs"
+              >
+                Logout
+              </Button>
+            </div>
+            <TimerDisplay timeLeft={timeLeft} />
+          </div>
+          <div className="px-4 pb-2">
+            <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Question
+            </h1>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto p-4 lg:p-6">
+          {/* Desktop Header */}
+          <div className="hidden lg:block mb-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <Badge
@@ -446,15 +579,17 @@ function StudentPageContent() {
           />
 
           {hasAnswered && results && (
-            <Card className="mt-8 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                <CardTitle className="text-indigo-900">Live Results</CardTitle>
+            <Card className="mt-6 lg:mt-8 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 lg:p-6">
+                <CardTitle className="text-indigo-900 text-base lg:text-lg">
+                  Live Results
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 lg:p-6">
                 <ResultsChart
                   question={currentQuestion}
                   results={results}
-                  isTeacher={false} // Students can't see live results
+                  isTeacher={false}
                 />
               </CardContent>
             </Card>
@@ -472,9 +607,15 @@ function StudentPageContent() {
 
   if (step === "results" && results) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <MobileHeader
+          title="Question Results"
+          subtitle="Wait for next question..."
+        />
+
+        <div className="max-w-4xl mx-auto p-4 lg:p-6">
+          {/* Desktop Header */}
+          <div className="hidden lg:block mb-8">
             <div className="flex items-center justify-between mb-4">
               <Badge
                 variant="secondary"
@@ -499,19 +640,23 @@ function StudentPageContent() {
             </p>
           </div>
 
-          <Card className="shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
-              <CardTitle className="text-green-900">Results Summary</CardTitle>
+          <Card className="shadow-lg mt-4 lg:mt-0">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 p-4 lg:p-6">
+              <CardTitle className="text-green-900 text-base lg:text-lg">
+                Results Summary
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-green-600 font-bold text-2xl">✓</span>
+            <CardContent className="p-4 lg:p-6">
+              <div className="text-center py-6 lg:py-8">
+                <div className="w-12 h-12 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-green-600 font-bold text-xl lg:text-2xl">
+                    ✓
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">
                   Your answer has been recorded!
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm lg:text-base">
                   Total responses: {results.totalVotes}
                 </p>
               </div>

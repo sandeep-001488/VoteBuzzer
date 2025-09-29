@@ -292,3 +292,23 @@ export const exportResultsController = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getActiveSessionController = async (req, res) => {
+  try {
+    const active = await History.findOne({
+      teacherId: req.user._id,
+      endedAt: { $exists: false },
+    }).populate("pollId");
+
+    if (!active) {
+      return res.json(null);
+    }
+
+    res.json({
+      historyId: active.historyId,
+      pollId: active.pollId._id,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

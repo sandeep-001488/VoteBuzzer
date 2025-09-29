@@ -19,7 +19,7 @@ const server = http.createServer(app);
 
 const io = new SocketIO(server, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL ,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },

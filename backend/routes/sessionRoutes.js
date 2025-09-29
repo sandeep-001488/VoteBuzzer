@@ -5,6 +5,7 @@ import {
   getSessionHistoryController,
   exportResultsController,
   getUserHistoryController,
+  getActiveSessionController,
 } from "../controllers/sessionController.js";
 
 const router = express.Router();
@@ -14,5 +15,6 @@ router.get("/user-history", authenticate, getUserHistoryController);
 router.get("/history/:historyId", authenticate, getSessionHistoryController);
 
 router.get("/export/:historyId", exportResultsController);
+router.get("/active", authenticate, getActiveSessionController);
 
 export default router;

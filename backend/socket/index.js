@@ -38,8 +38,98 @@ const socketAuth = async (socket, next) => {
 export default (io) => {
   io.use(socketAuth);
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log(`User connected: ${socket.user.name}`);
+
+    // New: Restore active session for teachers on connect
+    if (socket.user.role === "teacher") {
+      const activeHistory = await History.findOne({
+        teacherId: socket.userId,
+        endedAt: { $exists: false },
+      });
+      if (activeHistory) {
+        const historyId = activeHistory.historyId;
+        const pollId = activeHistory.pollId.toString();
+        const roomName = `poll-${pollId}-${historyId}`;
+
+        socket.join(roomName);
+
+        let activePollEntry = activePolls.get(historyId);
+
+        if (!activePollEntry) {
+          // Restore state
+          const sessions = await Session.find({
+            historyId,
+            connected: true,
+            kicked: false,
+          });
+          const studentsMap = new Map();
+          sessions.forEach((s) => {
+            studentsMap.set(s.sessionId, {
+              name: s.name,
+              socketId: null,
+              answered: false,
+            });
+          });
+
+          const askedSet = new Set(
+            activeHistory.finishedQuestions.map((fq) => fq.questionId)
+          );
+          const currentQEntry = activeHistory.finishedQuestions.find(
+            (fq) => !fq.endedAt
+          );
+          const currentQ = currentQEntry ? currentQEntry.questionId : null;
+
+          activePollEntry = {
+            pollId,
+            teacherId: socket.userId,
+            currentQuestion: currentQ,
+            students: studentsMap,
+            askedQuestions: askedSet,
+            roomName,
+          };
+          activePolls.set(historyId, activePollEntry);
+
+          // If current question, check timer
+          if (currentQ) {
+            const poll = await Poll.findById(pollId);
+            const question = poll.questions.find((q) => q.id === currentQ);
+            const timeLimit = question.timeLimitSec;
+            const elapsed =
+              (Date.now() - new Date(currentQEntry.startedAt)) / 1000;
+            const remaining = Math.max(0, timeLimit - elapsed);
+
+            if (remaining > 0) {
+              const timer = setTimeout(async () => {
+                await endQuestion(pollId, historyId, currentQ, question);
+              }, remaining * 1000);
+              questionTimers.set(`${historyId}-${currentQ}`, timer);
+
+              // Emit to teacher with remaining time
+              socket.emit("server:questionStarted", {
+                questionId: currentQ,
+                timeLeftSec: Math.floor(remaining),
+              });
+            } else {
+              await endQuestion(pollId, historyId, currentQ, question);
+            }
+          }
+        }
+
+        // Emit restore state to teacher
+        const poll = await Poll.findById(pollId);
+        socket.emit("server:sessionRestore", {
+          historyId,
+          pollId,
+          poll,
+          askedQuestions: Array.from(activePollEntry.askedQuestions),
+          currentQuestion: activePollEntry.currentQuestion,
+        });
+
+        // Sync participants
+        await updateParticipantsList(pollId, historyId);
+      }
+    }
 
     socket.on("teacher:startSession", async (data, callback) => {
       try {
@@ -115,7 +205,7 @@ export default (io) => {
               options: question.options,
               tallies: new Map(),
               totalVotes: 0,
-              startedAt: new Date(), 
+              startedAt: new Date(),
               endedAt: null,
             });
           } else {
@@ -272,7 +362,7 @@ export default (io) => {
     });
 
     // Student submits answer
-   
+
     socket.on("student:submitAnswer", async (data) => {
       const { pollId, historyId, questionId, optionId, sessionId } = data;
 
@@ -355,18 +445,7 @@ export default (io) => {
         await handleStudentDisconnect(socket);
       }
 
-      for (const [historyId, poll] of activePolls) {
-        if (poll.teacherId === socket.userId) {
-          activePolls.delete(historyId);
-          for (const [timerKey, timer] of questionTimers) {
-            if (timerKey.startsWith(historyId)) {
-              clearTimeout(timer);
-              questionTimers.delete(timerKey);
-            }
-          }
-          break;
-        }
-      }
+      // Removed teacher activePolls delete
     });
   });
 
@@ -487,7 +566,6 @@ export default (io) => {
       console.error("Error sending results update:", error);
     }
   }
-
 
   async function updateParticipantsList(pollId, historyId) {
     const roomName = `poll-${pollId}-${historyId}`;
